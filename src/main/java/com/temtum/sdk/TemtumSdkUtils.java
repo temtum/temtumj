@@ -87,8 +87,11 @@ public class TemtumSdkUtils {
             if (id != null) {
                 gen = gen + id;
             }
-            byte[] idHash = digest.digest(gen.getBytes(StandardCharsets.UTF_8));
-            return new String(Hex.encode(idHash));
+            if (id == null){
+                byte[] idHash = digest.digest(gen.getBytes(StandardCharsets.UTF_8));
+                return new String(Hex.encode(idHash));
+            }
+            return new String(Hex.encode(gen.getBytes(StandardCharsets.UTF_8)));
         } catch (Exception e) {
             throw new TemtumSdkException(e);
         }
