@@ -53,7 +53,7 @@ public class TemtumSdkUtils {
             long timestamp = new Date().getTime() / 1000;
 
             // generate id
-            String id = generateHex(txIns, txOuts, timestamp, null);
+            String id = generateId(txIns, txOuts, timestamp);
 
             // sign txIns
             for (TxIn txIn : txIns) {
@@ -77,21 +77,33 @@ public class TemtumSdkUtils {
         }
     }
 
-    private static String generateHex(TxIn[] txIns, TxOut[] txOuts, long timestamp, String id) throws TemtumSdkException {
+    private static String generateId(TxIn[] txIns, TxOut[] txOuts, long timestamp) throws TemtumSdkException {
         try {
             MessageDigest digest = MessageDigest.getInstance(SHA256);
             ObjectMapper mapper = new ObjectMapper();
             String txInsString = mapper.writeValueAsString(txIns);
             String txOutsString = mapper.writeValueAsString(txOuts);
             String gen = TRANSACTION_TYPE_REGULAR + timestamp + txInsString + txOutsString;
-            if (id != null) {
-                gen = gen + id;
-            }
-            if (id == null){
-                byte[] idHash = digest.digest(gen.getBytes(StandardCharsets.UTF_8));
-                return new String(Hex.encode(idHash));
-            }
-            return new String(Hex.encode(gen.getBytes(StandardCharsets.UTF_8)));
+            byte[] idHash = digest.digest(gen.getBytes(StandardCharsets.UTF_8));
+            return new String(Hex.encode(idHash));
+        } catch (Exception e) {
+            throw new TemtumSdkException(e);
+        }
+    }
+
+    private static String generateHex(TxIn[] txIns, TxOut[] txOuts, long timestamp, String id) throws TemtumSdkException {
+        try {
+            Transaction transaction = new Transaction();
+            transaction.setId(id);
+            transaction.setTimestamp(timestamp);
+            transaction.setTxIns(txIns);
+            transaction.setTxOuts(txOuts);
+            transaction.setType(TRANSACTION_TYPE_REGULAR);
+
+            ObjectMapper mapper = new ObjectMapper();
+            String transactionString = mapper.writeValueAsString(transaction);
+
+            return new String(Hex.encode(transactionString.getBytes(StandardCharsets.UTF_8)));
         } catch (Exception e) {
             throw new TemtumSdkException(e);
         }
