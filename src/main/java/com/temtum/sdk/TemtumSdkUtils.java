@@ -39,9 +39,28 @@ public class TemtumSdkUtils {
         if (txIns == null || txIns.length == 0) {
             throw new TemtumSdkException("In transactions are not provided.");
         }
-        if (txOuts == null) {
+        if (txOuts == null || txOuts.length == 0) {
             throw new TemtumSdkException("Out transactions are not provided.");
         }
+        Long totalInAmount = 0l, totalOutAmount = 0l;
+        for (TxIn txIn : txIns){
+            Long inAmount = txIn.getAmount();
+            if (inAmount == null || inAmount <= 0){
+                throw new TemtumSdkException("Wrong input amount.");
+            }
+            totalInAmount = totalInAmount + inAmount;
+        }
+        for (TxOut txOut : txOuts){
+            Long outAmount = txOut.getAmount();
+            if (outAmount == null || outAmount < 0){
+                throw new TemtumSdkException("Wrong output amount.");
+            }
+            totalOutAmount = totalOutAmount + outAmount;
+        }
+        if (!totalInAmount.equals(totalOutAmount)){
+            throw new TemtumSdkException("Inputs don't match outputs.");
+        }
+
         try {
             // address validation
             String address = txIns[0].getAddress();
