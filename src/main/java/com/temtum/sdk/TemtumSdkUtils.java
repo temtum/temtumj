@@ -52,7 +52,7 @@ public class TemtumSdkUtils {
         }
         for (TxOut txOut : txOuts){
             Long outAmount = txOut.getAmount();
-            if (outAmount == null || txOut.getAmount() < 0){
+            if (outAmount == null || outAmount < 0){
                 throw new TemtumSdkException("Wrong output amount.");
             }
             totalOutAmount = totalOutAmount + outAmount;
