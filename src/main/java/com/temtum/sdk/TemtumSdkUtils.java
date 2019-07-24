@@ -74,6 +74,9 @@ public class TemtumSdkUtils {
         // amounts validation
         Long totalInAmount = 0L, totalOutAmount = 0L;
         for (TxIn txIn : txIns) {
+            if (txIn == null){
+                throw new TemtumSdkException("Input is empty.");
+            }
             Long inAmount = txIn.getAmount();
             if (inAmount == null || inAmount <= 0) {
                 throw new TemtumSdkException("Wrong input amount.");
@@ -81,6 +84,9 @@ public class TemtumSdkUtils {
             totalInAmount = totalInAmount + inAmount;
         }
         for (TxOut txOut : txOuts) {
+            if (txOut == null){
+                throw new TemtumSdkException("Output is empty.");
+            }
             String address = txOut.getAddress();
             if (address == null || address.isEmpty()) {
                 throw new TemtumSdkException("Output address is not not provided.");
@@ -97,7 +103,7 @@ public class TemtumSdkUtils {
 
         // addresses validation
         String inAddress = txIns[0].getAddress();
-        if (inAddress == null) {
+        if (inAddress == null || inAddress.isEmpty()) {
             throw new TemtumSdkException("Input address is not not provided.");
         }
         if (txOuts.length == 1) {
