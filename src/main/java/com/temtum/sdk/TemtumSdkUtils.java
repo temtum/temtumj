@@ -63,7 +63,6 @@ public class TemtumSdkUtils {
     }
 
     private static void validate(TxIn[] txIns, TxOut[] txOuts) throws TemtumSdkException {
-        // transactions count validation
         if (txIns == null || txIns.length != 1) {
             throw new TemtumSdkException("Wrong input transactions count. Should be 1.");
         }
@@ -71,56 +70,67 @@ public class TemtumSdkUtils {
             throw new TemtumSdkException("Wrong output transactions count. Should be at least 1, max 2.");
         }
 
-        // amounts validation
-        Long totalInAmount = 0L, totalOutAmount = 0L;
-        for (TxIn txIn : txIns) {
-            if (txIn == null){
-                throw new TemtumSdkException("Input is empty.");
-            }
-            Long inAmount = txIn.getAmount();
-            if (inAmount == null || inAmount <= 0) {
-                throw new TemtumSdkException("Wrong input amount.");
-            }
-            totalInAmount = totalInAmount + inAmount;
+        TxIn txIn = txIns[0];
+        if (txIn == null) {
+            throw new TemtumSdkException("Input is empty.");
         }
-        for (TxOut txOut : txOuts) {
-            if (txOut == null){
-                throw new TemtumSdkException("Output is empty.");
-            }
-            String address = txOut.getAddress();
-            if (address == null || address.isEmpty()) {
-                throw new TemtumSdkException("Output address is not not provided.");
-            }
-            Long outAmount = txOut.getAmount();
-            if (outAmount == null || outAmount < 0) {
-                throw new TemtumSdkException("Wrong output amount.");
-            }
-            totalOutAmount = totalOutAmount + outAmount;
+        Long inAmount = txIn.getAmount();
+        if (inAmount == null || inAmount <= 0) {
+            throw new TemtumSdkException("Wrong input amount.");
         }
-        if (!totalInAmount.equals(totalOutAmount)) {
-            throw new TemtumSdkException("Inputs don't match outputs.");
-        }
-
-        // addresses validation
         String inAddress = txIns[0].getAddress();
         if (inAddress == null || inAddress.isEmpty()) {
             throw new TemtumSdkException("Input address is not not provided.");
         }
-        if (txOuts.length == 1) {
-            if (inAddress.equals(txOuts[0].getAddress())) {
-                throw new TemtumSdkException("Input and output addresses should be different.");
-            }
-        } else {
+
+        Long outAmount;
+        if (txOuts.length != 1) {
+            Long totalOutAmount = 0L;
             boolean matches = false;
             for (TxOut txOut : txOuts) {
-                if (inAddress.equals(txOut.getAddress())) {
-                    matches = true;
-                    break;
+                if (txOut == null) {
+                    throw new TemtumSdkException("Output is empty.");
                 }
+                String outAddress = txOut.getAddress();
+                if (outAddress == null || outAddress.isEmpty()) {
+                    throw new TemtumSdkException("Output address is not not provided.");
+                }
+                boolean currentAddressMatchesInput = inAddress.equals(outAddress);
+                if (!matches) {
+                    matches = currentAddressMatchesInput;
+                } else if (currentAddressMatchesInput) {
+                    throw new TemtumSdkException("Only one of output addresses should match input address.");
+                }
+                Long amount = txOut.getAmount();
+                if (amount == null || amount < 0) {
+                    throw new TemtumSdkException("Wrong output amount.");
+                }
+                totalOutAmount = totalOutAmount + amount;
             }
             if (!matches) {
                 throw new TemtumSdkException("One of output addresses should match input address.");
             }
+            outAmount = totalOutAmount;
+        } else {
+            TxOut txOut = txOuts[0];
+            if (txOut == null) {
+                throw new TemtumSdkException("Output is empty.");
+            }
+            String outAddress = txOut.getAddress();
+            if (outAddress == null || outAddress.isEmpty()) {
+                throw new TemtumSdkException("Output address is not not provided.");
+            }
+            if (inAddress.equals(outAddress)) {
+                throw new TemtumSdkException("Input and output addresses should be different.");
+            }
+            outAmount = txOut.getAmount();
+            if (outAmount == null || outAmount < 0) {
+                throw new TemtumSdkException("Wrong output amount.");
+            }
+        }
+
+        if (!inAmount.equals(outAmount)) {
+            throw new TemtumSdkException("Inputs don't match outputs.");
         }
     }
 
