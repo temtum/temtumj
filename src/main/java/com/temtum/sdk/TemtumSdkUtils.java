@@ -36,31 +36,7 @@ public class TemtumSdkUtils {
         if (privateKey == null) {
             throw new TemtumSdkException("Private key is not provided.");
         }
-        if (txIns == null || txIns.length == 0) {
-            throw new TemtumSdkException("In transactions are not provided.");
-        }
-        if (txOuts == null || txOuts.length == 0) {
-            throw new TemtumSdkException("Out transactions are not provided.");
-        }
-        Long totalInAmount = 0l, totalOutAmount = 0l;
-        for (TxIn txIn : txIns){
-            Long inAmount = txIn.getAmount();
-            if (inAmount == null || inAmount <= 0){
-                throw new TemtumSdkException("Wrong input amount.");
-            }
-            totalInAmount = totalInAmount + inAmount;
-        }
-        for (TxOut txOut : txOuts){
-            Long outAmount = txOut.getAmount();
-            if (outAmount == null || outAmount < 0){
-                throw new TemtumSdkException("Wrong output amount.");
-            }
-            totalOutAmount = totalOutAmount + outAmount;
-        }
-        if (!totalInAmount.equals(totalOutAmount)){
-            throw new TemtumSdkException("Inputs don't match outputs.");
-        }
-
+        validate(txIns, txOuts);
         try {
             // address validation
             String address = txIns[0].getAddress();
@@ -83,6 +59,62 @@ public class TemtumSdkUtils {
             return generateHex(txIns, txOuts, timestamp, id);
         } catch (Exception e) {
             throw new TemtumSdkException(e);
+        }
+    }
+
+    private static void validate(TxIn[] txIns, TxOut[] txOuts) throws TemtumSdkException {
+        // transactions count validation
+        if (txIns == null || txIns.length != 1) {
+            throw new TemtumSdkException("Wrong input transactions count. Should be 1.");
+        }
+        if (txOuts == null || txOuts.length == 0 || txOuts.length > 2) {
+            throw new TemtumSdkException("Wrong output transactions count. Should be at least 1, max 2.");
+        }
+
+        // amounts validation
+        Long totalInAmount = 0L, totalOutAmount = 0L;
+        for (TxIn txIn : txIns) {
+            Long inAmount = txIn.getAmount();
+            if (inAmount == null || inAmount <= 0) {
+                throw new TemtumSdkException("Wrong input amount.");
+            }
+            totalInAmount = totalInAmount + inAmount;
+        }
+        for (TxOut txOut : txOuts) {
+            String address = txOut.getAddress();
+            if (address == null || address.isEmpty()) {
+                throw new TemtumSdkException("Output address is not not provided.");
+            }
+            Long outAmount = txOut.getAmount();
+            if (outAmount == null || outAmount < 0) {
+                throw new TemtumSdkException("Wrong output amount.");
+            }
+            totalOutAmount = totalOutAmount + outAmount;
+        }
+        if (!totalInAmount.equals(totalOutAmount)) {
+            throw new TemtumSdkException("Inputs don't match outputs.");
+        }
+
+        // addresses validation
+        String inAddress = txIns[0].getAddress();
+        if (inAddress == null) {
+            throw new TemtumSdkException("Input address is not not provided.");
+        }
+        if (txOuts.length == 1) {
+            if (inAddress.equals(txOuts[0].getAddress())) {
+                throw new TemtumSdkException("Input and output addresses should be different.");
+            }
+        } else {
+            boolean matches = false;
+            for (TxOut txOut : txOuts) {
+                if (inAddress.equals(txOut.getAddress())) {
+                    matches = true;
+                    break;
+                }
+            }
+            if (!matches) {
+                throw new TemtumSdkException("One of output addresses should match input address.");
+            }
         }
     }
 
