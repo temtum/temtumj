@@ -62,6 +62,10 @@ public class TemtumSdkUtils {
         }
     }
 
+    public static String decode(String transactionHex){
+        return  new String(Hex.decode(transactionHex));
+    }
+
     private static void validate(TxIn[] txIns, TxOut[] txOuts) throws TemtumSdkException {
         if (txIns == null || txIns.length != 1) {
             throw new TemtumSdkException("Wrong input transactions count. Should be 1.");
